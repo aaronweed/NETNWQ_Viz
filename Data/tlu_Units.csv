@@ -1,0 +1,62 @@
+parm,unit
+Discharge,Discharge (cu ft /sec)
+DO_mg.L,Dissolved Oxygen  (mg/L)
+DO (%),Dissolved Oxygen (%)
+pH,pH
+BP_mmHG,BP (mm HG)
+Specific conductance,Specific Conductance (猶/cm)
+Water Temperature,Temperature (C)
+TotalArea,Total Area (m2)
+TotalVel,Total velocity 
+Turbidity,Turbidity (NTU)
+DEPTH,(m)
+TYPE,
+FPH,FPH
+eqPH,eqPH
+Color_Flag,
+ACOLOR,A Color
+TCOLOR,T Color
+TColor_Flag,
+COND,
+ANC,ANC (畫q/L)
+Ca_ueqL,Ca (畫q/L)
+Mg_ueqL,Mg (畫q/L)
+K_ueqL,K (畫q/L)
+K_Flag,
+Na_ueqL,Na (畫q/L)
+Cl_ueqL,Cl (畫q/L)
+Cl_Flag,
+SO4_ueqL,SO4 (畫q/L)
+SO4_Flag,
+NO3_ueq/L,NO3 (畫q/L)
+NO3_ueq/L_Flag,
+NO2+NO3_mg/L,NO2 and NO3 (mg/L)
+NO2+NO3_Flag,
+NO2_mg/L,NO2 (mg/L)
+NO2_Flag,
+T_Dis_N_mgL,Total Diss. N  (mg/L)
+T_Dis_N_Flag,
+NH4_mg/L,NH4  (mg/L)
+NH4_Flag,
+NH3_mg/L,Nh3  (mg/L)
+NH3_Flag,
+TN_mg/L,TN  (mg/L)
+TN_Flag,
+TP_ug/L,TP  (mg/L)
+TP_Flag,
+T_Dis_P_ugL,Total Diss. P (痢/L)
+T_Dis_P_Flag,
+PO4_ug/L,PO4 (痢/L)
+PO4_Flag,
+CHLA_ugL,CHLA (痢/L)
+CHLA_Flag,
+DOC_mgL,DOC (mg/L)
+DOC_Flag,
+DIC_mgL,DIC (mg/L)
+Si_mgL,Si (mg/L)
+Al_ugL,Al (mg/L)
+Al_Flag,
+FPHMETH,FPHMETH
+CONDMETH,CONDMETH
+COLORMETH,COLORMETH
+ALKMETH,ALKMETH
