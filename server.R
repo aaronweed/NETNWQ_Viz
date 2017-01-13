@@ -12,23 +12,59 @@ library(DT)
 library(ggplot2)
 library(RColorBrewer)
 
-df<-read.csv("./Data/NETN_Water_Data_RViz.csv")
-units<-read.csv("./Data/tlu_Units.csv") ## table with units for lableing plots
+## bring in data
+# df<-read.csv("./Data/NETN_Water_Data_RViz.csv")
+# units<-read.csv("./Data/tlu_Units.csv") ## table with units for lableing plots
+
 
 ##### Begin Server Function ####
 
 shinyServer(function(input,output){
+
+###################### Create set of reactive selection boxes in UI  ####################
+  ### select site based on park
+  output$SiteResults <- renderUI({ 
+    
+    df_sub<-subset(df, ParkCode %in% input$park )
+    df_sub<-droplevels(df_sub)
+    
+    selectInput(inputId='site', label='Select Site',  unique(levels(df_sub$Description)))
+  })
   
+  
+  output$VarResults <- renderUI({ 
+    
+    df_sub<-subset(df, Description %in% input$site )
+    df_sub<-df_sub[!is.na(df_sub$Value),]
+    df_sub<-droplevels(df_sub)
+    
+    selectInput(inputId='parm', label='Select variable to plot',  unique(levels(df_sub$Local.Characteristic.Name)), selected = "pH")
+  })
+  
+#####################################################  
+### download data table
+    
+    output$downloadData <- downloadHandler(
+      
+      filename = function() { 
+        paste(input$site,input$parm, '.csv', sep='') 
+      },
+      content = function(file) {
+        write.csv(data, file)
+      }
+    )
+  
+#######################################################   
 ### time series plot
    output$plot <- renderPlot({
     
-     data<-subset(df, Description %in% input$x & Local.Characteristic.Name %in% input$z)
+     data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
      data$Value<-as.numeric(as.character(data$Value))
      
      data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
      data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
      
-     parm<-input$z
+     parm<-input$parm
      
      if(input$AA == "No"){
        
@@ -47,7 +83,7 @@ shinyServer(function(input,output){
        }
      
    
-     if(input$y == "Linear"){
+     if(input$trend == "Linear"){
        
       fit <- lm(Value ~ Visit.Start.Date, data = data, na.action=na.omit)
      
@@ -65,7 +101,7 @@ shinyServer(function(input,output){
 
           }
      
-      if(input$y == "No"){
+      if(input$trend == "No"){
         
         if(data$LocationType == "Stream"){
           
@@ -97,7 +133,7 @@ shinyServer(function(input,output){
      
      if(input$AA == "Histogram"){
        
-       data<-subset(df, Description %in% input$x & Local.Characteristic.Name %in% input$z)
+       data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
        data$Value<-as.numeric(as.character(data$Value))
        
        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
