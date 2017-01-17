@@ -42,7 +42,7 @@ NH3_mg/L,Nh3  (mg/L)
 NH3_Flag,
 TN_mg/L,TN  (mg/L)
 TN_Flag,
-TP_ug/L,TP  (mg/L)
+TP_ug/L,TP  (µg/L)
 TP_Flag,
 T_Dis_P_ugL,Total Diss. P (µg/L)
 T_Dis_P_Flag,

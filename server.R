@@ -66,24 +66,35 @@ shinyServer(function(input,output){
      
      parm<-input$parm
      
-     if(input$AA == "No"){
+     if(input$plottype == "Time Series"){
        
        if(data$LocationType == "Stream"){
-       
+         
+         if(input$logscale ==TRUE){
+           
+           p <- ggplot(data, aes(x= Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Date") + 
+             geom_point(colour = "black", size = 2,na.rm=TRUE)
+          }else{
+           
           p <- ggplot(data, aes(x= Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date") + 
-          geom_point(colour = "black", size = 2,na.rm=TRUE)
+          geom_point(colour = "black", size = 2,na.rm=TRUE)}
      
        }else{
          
         ## plot parm by depth for lakes and ponds
-         
+         if(input$logscale ==TRUE){
+           
+          p <- ggplot(data, aes(Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Date", colour= "Depth (m)") + 
+             geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)
+         }else{
+           
          p <- ggplot(data, aes(Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date", colour= "Depth (m)") + 
-           geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE) 
+           geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)}
          
        }
      
    
-     if(input$trend == "Linear"){
+     if(input$trend == TRUE){
        
       fit <- lm(Value ~ Visit.Start.Date, data = data, na.action=na.omit)
      
@@ -91,7 +102,7 @@ shinyServer(function(input,output){
              geom_smooth(method= "lm", se= TRUE) +
               theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
               theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
-              theme(strip.text.x= element_text(size=12, face=c("bold.italic"))) +
+              theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
               theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
               theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
               theme(legend.key = element_rect(fill = "white", color = "black"),legend.key.size = unit(0.5, "in")) +
@@ -101,28 +112,16 @@ shinyServer(function(input,output){
 
           }
      
-      if(input$trend == "No"){
+      if(input$trend == FALSE){
         
-        if(data$LocationType == "Stream"){
-          
-          p <- ggplot(data, aes(Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date") + 
-            geom_point(colour = "black", size = 2,na.rm=TRUE)
-          
-        }else{
-          
-          ## plot parm by depth for lakes and ponds
-          p <- ggplot(data, aes(Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date", colour= "Depth (m)") + 
-            geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)
-          
-        }
-      
-       p<- (p + scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+        
+       p<- (p + facet_wrap(~Description)+ scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
               theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
               theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
-              theme(strip.text.x= element_text(size=12, face=c("bold.italic"))) +
+              theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
               theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
               theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
-              theme(legend.key = element_rect(fill = "white", color = "black"),legend.key.size = unit(0.5, "in")) +
+              theme(legend.key = element_rect(fill = "white", color = "white"),legend.key.size = unit(0.5, "in")) +
               theme(panel.background =  element_rect(fill="white", colour="black")) +
               theme(panel.grid.major = element_line(colour = "grey90"))+ggtitle(data$ParkCode[1]))
        
@@ -131,7 +130,7 @@ shinyServer(function(input,output){
      print(p)
    }
      
-     if(input$AA == "Histogram"){
+     if(input$plottype == "Histogram"){
        
        data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
        data$Value<-as.numeric(as.character(data$Value))
@@ -140,17 +139,29 @@ shinyServer(function(input,output){
        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
        
        ### add histogram
-       p2 <- ggplot(data, aes(Value, fill= Year))+ labs(x = units$unit[units$parm %in% parm], y= "Frequency") + 
-         geom_histogram()
-
        
-       p2<- (p2 +
+       if(input$logscale ==TRUE){
+         
+       p2 <- ggplot(data, aes(log(Value), fill= Year))+ labs(x = paste("log", units$unit[units$parm %in% parm]), y= "Frequency", colour= "Year") + 
+         geom_histogram()
+       }else{
+         
+        p2 <- ggplot(data, aes(Value, fill= Year))+ labs(x = units$unit[units$parm %in% parm], y= "Frequency", colour= "Year") + 
+         geom_histogram()
+         
+       }
+          
+
+       #geom_histogram(binwidth = input$binwidth)
+       
+       p2<- (p2 +facet_wrap(~Description)+
                theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
                theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
-               theme(strip.text.x= element_text(size=12, face=c("bold.italic"))) +
+               theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
                theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
                theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
-               theme(legend.key = element_rect(fill = "white", color = "black")) +
+               theme(legend.key = element_rect(fill = "white", color = "white"),legend.key.size = unit(0.5, "in"))+
+               theme(legend.text = element_text(size = 12), legend.position = "top", legend.box ="horizontal") + 
                theme(panel.background =  element_rect(fill="white", colour="black")) +
                theme(panel.grid.major = element_line(colour = "grey90"))+ggtitle(data$ParkCode))
        
@@ -159,6 +170,44 @@ shinyServer(function(input,output){
        
      }
      
+     if(input$plottype == "Box Plot (monthly)"){
+       
+       data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
+       data$Value<-as.numeric(as.character(data$Value))
+       
+       data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+       data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
+       data$month<-as.factor(format(data$Visit.Start.Date,"%m")) #extract Year
+       
+       
+       ### add histogram
+       
+       if(input$logscale ==TRUE){
+         
+       p2 <- ggplot(data, aes(x= as.factor(month), y= log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Month", colour= "Year") + 
+         geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2)
+       }else{
+         p2 <- ggplot(data, aes(x= as.factor(month), y= Value))+ labs(y = units$unit[units$parm %in% parm], x= "Month", colour= "Year") + 
+           geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2)
+         
+       }
+       
+       
+       p2<- (p2 + facet_wrap(~Description)+
+               theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
+               theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
+               theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
+               theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+               theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+               theme(legend.key = element_rect(fill = "white", color = "white"),legend.key.size = unit(0.5, "in"))+
+               theme(legend.text = element_text(size = 12), legend.position = "top", legend.box ="horizontal") + 
+               theme(panel.background =  element_rect(fill="white", colour="black")) +
+               theme(panel.grid.major = element_line(colour = "grey90"))+ggtitle(data$ParkCode))
+       
+       print(p2)
+       
+       
+     }
      
      
      

@@ -39,11 +39,14 @@ fluidPage(
     uiOutput("VarResults"),
     
     ##Add in options
-    tags$div(title="Add a trend line ",selectInput(inputId='trend', label='Add trend line',choices=c("No", "Linear"), selected = "No")),
-    tags$div(title="Histogram ",selectInput(inputId='AA', label='Plot histogram',choices=c("No", "Histogram"), selected = "No")),
+    
+    tags$div(title="Plot Type ",selectInput(inputId='plottype', label='Plot type',choices=c("Time Series", "Histogram", "Box Plot (monthly)"), selected = "No")),
+    tags$div(title="Add a trend line ", conditionalPanel(condition = "input.plottype == 'Time Series'",checkboxInput(inputId='trend', label='Add Linear trend line', value=FALSE))),
+    #tags$div(title="Binwidth control ", conditionalPanel(condition = "input.plottype == 'Histogram'",numericInput(inputId='binwidth', label='Binwidth', value=500, min= 1, max= 100))),
+    tags$div(title="Binwidth control ", checkboxInput(inputId='logscale', label='Convert value to log-scale', value=FALSE)),
+    
     br(),
-    p("Set plot histogram to No for time series plot"),
-    br(),
+
     #downloadButton('downloadData', 'Download Data'),
     #img(src = "BMI_sampling.jpg", height = 140, width = 180),
     br(),
