@@ -20,10 +20,11 @@ library(RColorBrewer)
 ##### Begin Server Function ####
 
 shinyServer(function(input,output){
-
+  
+#################### Single site plots planel ##############################################
 ###################### Create set of reactive selection boxes in UI  ####################
   ### select site based on park
-  output$SiteResults <- renderUI({ 
+  output$SiteResultsA <- renderUI({ 
     
     df_sub<-subset(df, ParkCode %in% input$park & LocationType %in% input$loc)
     df_sub<-droplevels(df_sub)
@@ -53,9 +54,6 @@ shinyServer(function(input,output){
     
   selectInput(inputId='parm', label='Select variable to plot', choices=  unique(levels(df_sub$Local.Characteristic.Name)))
   })
-  
-  
-  
   
 #####################################################  
 ### download data table
@@ -239,34 +237,154 @@ shinyServer(function(input,output){
      , height = 600, width = 800)
    
    
-   ### add in interactive graph
-   ### ERROR: xts doesn't like multiple observations pertime point. Will need to either aggregate data prior to plotting
-   # create an mts with vectors corresponding to each rep (MIMA) or depth (lakes)
-   
-   # output$dygraph <- renderDygraph({
-   #   
-   #   data<-subset(df, Description %in% input$x & Local.Characteristic.Name %in% input$z)
-   #   data<-droplevels(data)
-   #   data$Value<-as.numeric(as.character(data$Value))
-   #   
-   #   parm<-input$z
-   #   
-   #   data.raw<-data[,c("Visit.Start.Date","Value")]
-   #   time.raw <- as.POSIXct(data$Visit.Start.Date, format = "%m/%d/%Y")
-   #   series.raw<-xts(data.raw, order.by= time.raw)
-   #  #plot(series.raw)
-   #   #str(series.raw)
-   #   
-   #   ##### Create dynamic plot
-   #     y<- dygraph(series.raw$Value, main = site, xlab= "Date", ylab= units$unit[units$parm %in% parm])%>%
-   #     dyRangeSelector()%>%
-   #     dyOptions(drawPoints = TRUE,  pointSize = 2, strokeWidth=0)%>%
-   #     #dySeries(parm, label = units$unit[units$parm %in% parm])%>%
-   #     dyLegend(show = "always", hideOnMouseOut = FALSE)
-   #   print(y)
-   #   
-   # })
-   
+##################################### Bivariate plot panel ###################
+      ### UI  steup for choosing parms per site
+      
+      ### select site based on park
+      output$SiteResultsB <- renderUI({ 
+        
+        df_sub<-subset(df, ParkCode %in% input$parkB & LocationType %in% input$locB)
+        df_sub<-droplevels(df_sub)
+        
+        selectInput(inputId='siteB', label='Select Site', choices= c("All", unique(levels(df_sub$Description))))
+      })
+      
+      
+      output$VarResultsX <- renderUI({ 
+        # dynamically select parm based on location type. This will cause the UI to update 
+        
+        if(input$locB == "Stream"){
+          
+          df_sub<-subset(df, LocationType %in% input$locB )
+          df_sub<-df_sub[!is.na(df_sub$Value),]
+          df_sub<-droplevels(df_sub)
+          
+        }
+        
+        if(input$locB == "Lake"){
+          
+          df_sub<-subset(df, LocationType %in% input$locB )
+          df_sub<-df_sub[!is.na(df_sub$Value),]
+          df_sub<-droplevels(df_sub)
+          
+        }
+        
+        selectInput(inputId='parmX', label='Select variable to plot on the X axis', choices=  unique(levels(df_sub$Local.Characteristic.Name)), selected ="Discharge")
+      })
+      
+      output$VarResultsY <- renderUI({ 
+        # dynamically select parm based on location type. This will cause the UI to update 
+        
+        if(input$locB == "Stream"){
+          
+          df_sub<-subset(df, LocationType %in% input$locB )
+          df_sub<-df_sub[!is.na(df_sub$Value),]
+          df_sub<-droplevels(df_sub)
+          
+        }
+        
+        if(input$locB == "Lake"){
+          
+          df_sub<-subset(df, LocationType %in% input$locB )
+          df_sub<-df_sub[!is.na(df_sub$Value),]
+          df_sub<-droplevels(df_sub)
+          
+        }
+        
+        selectInput(inputId='parmY', label='Select variable to plot on the Y-axis', choices=unique(levels(df_sub$Local.Characteristic.Name)), selected ="Specific conductance")
+      })    
+      
+      output$plot2 <- renderPlot({
+        library(plyr)
+       sel<-c(input$parmX,input$parmY)
+        
+       if(input$siteB == "All"){
+         ## subset df just by the park and parms
+        dataX<-subset(df,  ParkCode %in% input$parkB & Local.Characteristic.Name %in% input$parmX)
+          }else{
+        # select by site and parms
+        dataX<-subset(df, Description %in% input$siteB & Local.Characteristic.Name %in% input$parmX)
+         }
+           
+        dataX$Value<-as.numeric(as.character(dataX$Value))
+        dataX$x<-dataX$Value ; dataX<-dataX[,c("ParkCode", "Description" , "Visit.Start.Date", "x")]
+        
+        if(input$siteB == "All"){
+          ## subset df just by the park and parms
+        dataY<-subset(df,  ParkCode %in% input$parkB & Local.Characteristic.Name %in% input$parmY)
+        }else{
+          # select by site and parms
+        dataY<-subset(df, Description %in% input$siteB & Local.Characteristic.Name %in% input$parmY)
+         }
+          
+        dataY$Value<-as.numeric(as.character(dataY$Value))
+        dataY$y<-dataY$Value; dataY<-dataY[,c("ParkCode", "Description" , "Visit.Start.Date", "y")]
+        
+        data<-join(dataX, dataY, by= c("Description","Visit.Start.Date"), type= "left")
+        
+        # Create Year variable
+        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
+        
+        #data_w<-cast(data, ParkCode+ Description + Visit.Start.Date +Year+ DEPTH ~  Local.Characteristic.Name, fun=mean,  value= "Value")
+        
+        if(nrow(data)== 0){
+          stop("Sorry, at least one variable has not been collected at this site.")
+        }
+        
+        if(input$corr == TRUE){
+          
+          if(input$logscale_bi == TRUE){
+            
+            p <- ggplot(data, aes(x= log(as.numeric(x)), y = log(as.numeric(y)))) +  geom_point(aes(colour=Year),size = 3,na.rm=TRUE) + labs(y = paste("log ",units$unit[units$parm %in% input$parmY]), x= paste("log ", units$unit[units$parm %in% input$parmX])) 
+          
+            corr<-cor.test(log(as.numeric(data$x)+1),log(as.numeric(data$y)+1), method = "pearson", na.action=na.omit)
+            
+            }else{
+            
+            p <- ggplot(data, aes(x= as.numeric(x), y = as.numeric(y))) +  geom_point(aes(colour =Year), size = 3,na.rm=TRUE) + labs(y = units$unit[units$parm %in% input$parmY], x= units$unit[units$parm %in% input$parmX]) 
+            
+            corr<-cor.test(as.numeric(data$x),as.numeric(data$y), method = "pearson", na.action=na.omit)
+          }
+          
+          p<- (p +
+                 theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
+                 theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
+                 theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
+                 theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+                 theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+                 theme(legend.key = element_rect(fill = "white", color = "white")) +
+                 theme(panel.background =  element_rect(fill="white", colour="black")) +
+                 theme(panel.grid.major = element_line(colour = "grey90"))+ggtitle(paste(data$ParkCode, "                   r = ",signif(corr$estimate, 3),
+           " P =",signif(corr$p.value, 2))))
+          print(p)
+          
+        }else{
+          
+          if(input$logscale_bi == TRUE){
+            
+            p <- ggplot(data, aes(x= log(as.numeric(x)), y = log(as.numeric(y)), colour =Year)) +  geom_point(size = 3,na.rm=TRUE) + labs(y = paste("log ",units$unit[units$parm %in% input$parmY]), x= paste("log ", units$unit[units$parm %in% input$parmX])) 
+            
+          }else{
+            
+            p <- ggplot(data, aes(x= as.numeric(x), y = as.numeric(y), colour =Year)) +  geom_point(size = 3,na.rm=TRUE) + labs(y = units$unit[units$parm %in% input$parmY], x= units$unit[units$parm %in% input$parmX]) 
+            
+          }
+          
+          p<- (p+  facet_wrap(~Description) + ggtitle(data$ParkCode[1])+ 
+                 theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
+                 theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
+                 theme(strip.text.x= element_text(size=12, face=c("bold.italic"))) +
+                 theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+                 theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+                 theme(legend.key = element_rect(fill = "white", color = "white")) +
+                 theme(panel.background =  element_rect(fill="white", colour="black")) +
+                 theme(panel.grid.major = element_line(colour = "grey90")))
+          print(p)
+        }
+          
+          }
+        , height = 600, width = 800)
 
 }) ## end shiny serverfunc    
 
