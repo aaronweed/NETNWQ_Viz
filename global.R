@@ -8,3 +8,5 @@ SiteList<-unique(levels(df$Description))
 
 VarList<-unique(levels(df$Local.Characteristic.Name))
 
+# ACAD_var<- unique(levels(df$Local.Characteristic.Name[df$ParkCode == "ACAD"]))
+# MABI_var<- unique(levels(df$Local.Characteristic.Name[df$ParkCode == "MABI"]))

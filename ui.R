@@ -32,18 +32,22 @@ fluidPage(
     #Park selection
     tags$div(title="Choose the park you want to work with",selectInput(inputId='park', label='Select Park', choices= ParkList, selected = "ACAD")),
     
+    #Location Type selection
+    tags$div(title="Choose site type",radioButtons(inputId='loc', label='Select Stream or Lake/Pond', choices= c("Stream","Lake"), selected = "Stream")),
+    
     # Site selection
     uiOutput("SiteResults"),
     
     # Parameter selection
+    #tags$div(title="Choose the variable you want to plot",selectInput(inputId='parm', label='Select variable to plot', choices=  VarList)),
     uiOutput("VarResults"),
     
     ##Add in options
     
     tags$div(title="Plot Type ",selectInput(inputId='plottype', label='Plot type',choices=c("Time Series", "Histogram", "Box Plot (monthly)"), selected = "No")),
     tags$div(title="Add a trend line ", conditionalPanel(condition = "input.plottype == 'Time Series'",checkboxInput(inputId='trend', label='Add Linear trend line', value=FALSE))),
-    #tags$div(title="Binwidth control ", conditionalPanel(condition = "input.plottype == 'Histogram'",numericInput(inputId='binwidth', label='Binwidth', value=500, min= 1, max= 100))),
-    tags$div(title="Binwidth control ", checkboxInput(inputId='logscale', label='Convert value to log-scale', value=FALSE)),
+    tags$div(title="Binwidth control ", conditionalPanel(condition = "input.plottype == 'Histogram'",sliderInput(inputId='binwidth', label='Binwidth', value=.1, min= 0, max= 1, step = .10))),
+    tags$div(title="Plot on log-scale ", checkboxInput(inputId='logscale', label='Convert value to log-scale', value=FALSE)),
     
     br(),
 
@@ -56,7 +60,7 @@ fluidPage(
     br()
     ),
     
-    mainPanel(plotOutput("plot")
+    mainPanel(plotOutput("plot",  width = "100%")
     
               
                         )

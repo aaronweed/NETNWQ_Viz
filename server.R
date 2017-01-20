@@ -25,7 +25,7 @@ shinyServer(function(input,output){
   ### select site based on park
   output$SiteResults <- renderUI({ 
     
-    df_sub<-subset(df, ParkCode %in% input$park )
+    df_sub<-subset(df, ParkCode %in% input$park & LocationType %in% input$loc)
     df_sub<-droplevels(df_sub)
     
     selectInput(inputId='site', label='Select Site',  unique(levels(df_sub$Description)))
@@ -33,13 +33,29 @@ shinyServer(function(input,output){
   
   
   output$VarResults <- renderUI({ 
+    # dynamically select parm based on location type. This will cause the UI to update 
     
-    df_sub<-subset(df, Description %in% input$site )
+    if(input$loc == "Stream"){
+    
+    df_sub<-subset(df, LocationType %in% input$loc )
     df_sub<-df_sub[!is.na(df_sub$Value),]
     df_sub<-droplevels(df_sub)
     
-    selectInput(inputId='parm', label='Select variable to plot',  unique(levels(df_sub$Local.Characteristic.Name)), selected = "pH")
+    }
+    
+    if(input$loc == "Lake"){
+      
+      df_sub<-subset(df, LocationType %in% input$loc )
+      df_sub<-df_sub[!is.na(df_sub$Value),]
+      df_sub<-droplevels(df_sub)
+      
+    }
+    
+  selectInput(inputId='parm', label='Select variable to plot', choices=  unique(levels(df_sub$Local.Characteristic.Name)))
   })
+  
+  
+  
   
 #####################################################  
 ### download data table
@@ -56,15 +72,20 @@ shinyServer(function(input,output){
   
 #######################################################   
 ### time series plot
-   output$plot <- renderPlot({
-    
-     data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
-     data$Value<-as.numeric(as.character(data$Value))
-     
-     data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
-     data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
-     
-     parm<-input$parm
+   
+      output$plot <- renderPlot({
+        
+        data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
+        data$Value<-as.numeric(as.character(data$Value))
+        
+        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
+         
+        if(nrow(data)== 0){
+          stop("Sorry, this variable has not been collected at this site.")
+        }
+        
+      parm<-input$parm
      
      if(input$plottype == "Time Series"){
        
@@ -127,7 +148,9 @@ shinyServer(function(input,output){
        
        
       }
-     print(p)
+     
+       print(p)
+       
    }
      
      if(input$plottype == "Histogram"){
@@ -143,17 +166,14 @@ shinyServer(function(input,output){
        if(input$logscale ==TRUE){
          
        p2 <- ggplot(data, aes(log(Value), fill= Year))+ labs(x = paste("log", units$unit[units$parm %in% parm]), y= "Frequency", colour= "Year") + 
-         geom_histogram()
+         geom_histogram() + scale_colour_brewer(palette = "Set1")
        }else{
          
         p2 <- ggplot(data, aes(Value, fill= Year))+ labs(x = units$unit[units$parm %in% parm], y= "Frequency", colour= "Year") + 
-         geom_histogram()
+          geom_histogram(binwidth = input$binwidth)+ scale_colour_brewer(palette = "Set1")
          
        }
           
-
-       #geom_histogram(binwidth = input$binwidth)
-       
        p2<- (p2 +facet_wrap(~Description)+
                theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
                theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
@@ -177,18 +197,21 @@ shinyServer(function(input,output){
        
        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
-       data$month<-as.factor(format(data$Visit.Start.Date,"%m")) #extract Year
+       data$month_num<-as.numeric(format(data$Visit.Start.Date,"%m")) #extract month
+       data$month<-as.factor(months(as.Date(data$Visit.Start.Date)))
        
+         
+       #data<-factor(data$month, levels=data$month[order(data$month_num)] ) 
        
-       ### add histogram
+       ### add boxplot
        
        if(input$logscale ==TRUE){
          
-       p2 <- ggplot(data, aes(x= as.factor(month), y= log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Month", colour= "Year") + 
-         geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2)
+       p2 <- ggplot(data, aes(x= reorder(month, month_num), y= log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Month", colour= "Year") + 
+         geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2) +scale_colour_brewer(palette = "Set1")
        }else{
-         p2 <- ggplot(data, aes(x= as.factor(month), y= Value))+ labs(y = units$unit[units$parm %in% parm], x= "Month", colour= "Year") + 
-           geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2)
+         p2 <- ggplot(data, aes(x= reorder(month, month_num), y= Value))+ labs(y = units$unit[units$parm %in% parm], x= "Month", colour= "Year") + 
+           geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2) +scale_colour_brewer(palette = "Set1")
          
        }
        
@@ -197,8 +220,8 @@ shinyServer(function(input,output){
                theme(axis.text.y = element_text(color="black", vjust= 0.5,size = 16 * 0.8,face="bold"))+
                theme(axis.text.x = element_text(angle = 0,  vjust=0,size = 16 * 0.8)) +
                theme(strip.text.x= element_text(size=14, face=c("bold.italic"))) +
-               theme(axis.title.x =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
-               theme(axis.title.y =element_text(size = 12, face ="bold", vjust= 1, debug=F))+
+               theme(axis.title.x =element_text(size = 14, face ="bold", vjust= 1, debug=F))+
+               theme(axis.title.y =element_text(size = 14, face ="bold", vjust= 1, debug=F))+
                theme(legend.key = element_rect(fill = "white", color = "white"),legend.key.size = unit(0.5, "in"))+
                theme(legend.text = element_text(size = 12), legend.position = "top", legend.box ="horizontal") + 
                theme(panel.background =  element_rect(fill="white", colour="black")) +
@@ -213,7 +236,7 @@ shinyServer(function(input,output){
      
    }
      
-     , height = 600, width = 1000)
+     , height = 600, width = 800)
    
    
    ### add in interactive graph
