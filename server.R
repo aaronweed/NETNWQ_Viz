@@ -52,7 +52,7 @@ shinyServer(function(input,output){
       
     }
     
-  selectInput(inputId='parm', label='Select variable to plot', choices=  unique(levels(df_sub$Local.Characteristic.Name)))
+  selectInput(inputId='parm', label='Select variable to plot', choices=  unique(levels(df_sub$Local.Characteristic.Name)), selected = "Water Temperature")
   })
   
 #####################################################  
@@ -73,17 +73,19 @@ shinyServer(function(input,output){
    
       output$plot <- renderPlot({
         
+
+        
         data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
         data$Value<-as.numeric(as.character(data$Value))
         
-        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%m/%d/%Y") #convert to StartDate
         data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
          
         if(nrow(data)== 0){
           stop("Sorry, this variable has not been collected at this site.")
         }
         
-      parm<-input$parm
+      
      
      if(input$plottype == "Time Series"){
        
@@ -91,24 +93,24 @@ shinyServer(function(input,output){
          
          if(input$logscale ==TRUE){
            
-           p <- ggplot(data, aes(x= Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Date") + 
-             geom_point(colour = "black", size = 2,na.rm=TRUE)
+           p <- ggplot(data, aes(x= Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% input$parm]), x= "Date") + 
+             geom_point(colour = "black", size = 2,na.rm=TRUE)+geom_line()
           }else{
            
-          p <- ggplot(data, aes(x= Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date") + 
-          geom_point(colour = "black", size = 2,na.rm=TRUE)}
+          p <- ggplot(data, aes(x= Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% input$parm], x= "Date") + 
+          geom_point(colour = "black", size = 2,na.rm=TRUE)+geom_line()}
      
        }else{
          
         ## plot parm by depth for lakes and ponds
          if(input$logscale ==TRUE){
            
-          p <- ggplot(data, aes(Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Date", colour= "Depth (m)") + 
-             geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)
+          p <- ggplot(data, aes(Visit.Start.Date, y = log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% input$parm]), x= "Date", colour= "Depth (m)") + 
+             geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE+geom_line())
          }else{
            
-         p <- ggplot(data, aes(Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% parm], x= "Date", colour= "Depth (m)") + 
-           geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)}
+         p <- ggplot(data, aes(Visit.Start.Date, y = Value))+ labs(y = units$unit[units$parm %in% input$parm], x= "Date", colour= "Depth (m)") + 
+           geom_point(aes(colour= DEPTH), size = 1.5,na.rm=TRUE)+geom_line()}
          
        }
      
@@ -155,19 +157,21 @@ shinyServer(function(input,output){
        
        data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
        data$Value<-as.numeric(as.character(data$Value))
+    
        
-       data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+       
+       data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%m/%d/%Y") #convert to StartDate
        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
        
        ### add histogram
        
        if(input$logscale ==TRUE){
          
-       p2 <- ggplot(data, aes(log(Value), fill= Year))+ labs(x = paste("log", units$unit[units$parm %in% parm]), y= "Frequency", colour= "Year") + 
+       p2 <- ggplot(data, aes(log(Value), fill= Year))+ labs(x = paste("log", units$unit[units$parm %in% input$parm]), y= "Frequency", colour= "Year") + 
          geom_histogram() + scale_colour_brewer(palette = "Set1")
        }else{
          
-        p2 <- ggplot(data, aes(Value, fill= Year))+ labs(x = units$unit[units$parm %in% parm], y= "Frequency", colour= "Year") + 
+        p2 <- ggplot(data, aes(Value, fill= Year))+ labs(x = units$unit[units$parm %in% input$parm], y= "Frequency", colour= "Year") + 
           geom_histogram(binwidth = input$binwidth)+ scale_colour_brewer(palette = "Set1")
          
        }
@@ -193,7 +197,7 @@ shinyServer(function(input,output){
        data<-subset(df, Description %in% input$site & Local.Characteristic.Name %in% input$parm)
        data$Value<-as.numeric(as.character(data$Value))
        
-       data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+       data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%m/%d/%Y") #convert to StartDate
        data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
        data$month_num<-as.numeric(format(data$Visit.Start.Date,"%m")) #extract month
        data$month<-as.factor(months(as.Date(data$Visit.Start.Date)))
@@ -205,10 +209,10 @@ shinyServer(function(input,output){
        
        if(input$logscale ==TRUE){
          
-       p2 <- ggplot(data, aes(x= reorder(month, month_num), y= log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% parm]), x= "Month", colour= "Year") + 
+       p2 <- ggplot(data, aes(x= reorder(month, month_num), y= log(Value)))+ labs(y = paste("log", units$unit[units$parm %in% input$parm]), x= "Month", colour= "Year") + 
          geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2) +scale_colour_brewer(palette = "Set1")
        }else{
-         p2 <- ggplot(data, aes(x= reorder(month, month_num), y= Value))+ labs(y = units$unit[units$parm %in% parm], x= "Month", colour= "Year") + 
+         p2 <- ggplot(data, aes(x= reorder(month, month_num), y= Value))+ labs(y = units$unit[units$parm %in% input$parm], x= "Month", colour= "Year") + 
            geom_boxplot(outlier.shape = 1, outlier.colour ="red", outlier.size= 1.5) + geom_point(aes(colour= Year), size =2) +scale_colour_brewer(palette = "Set1")
          
        }
@@ -269,7 +273,7 @@ shinyServer(function(input,output){
           
         }
         
-        selectInput(inputId='parmX', label='Select variable to plot on the X axis', choices=  unique(levels(df_sub$Local.Characteristic.Name)), selected ="Discharge")
+        selectInput(inputId='parmX', label='Select variable to plot on the X axis', choices=  unique(levels(df_sub$Local.Characteristic.Name)), selected ="Discharge_cfs")
       })
       
       output$VarResultsY <- renderUI({ 
@@ -291,7 +295,7 @@ shinyServer(function(input,output){
           
         }
         
-        selectInput(inputId='parmY', label='Select variable to plot on the Y-axis', choices=unique(levels(df_sub$Local.Characteristic.Name)), selected ="Specific conductance")
+        selectInput(inputId='parmY', label='Select variable to plot on the Y-axis', choices=unique(levels(df_sub$Local.Characteristic.Name)), selected ="SpCond..uS.cm.")
       })    
       
       output$plot2 <- renderPlot({
@@ -321,9 +325,10 @@ shinyServer(function(input,output){
         dataY$y<-dataY$Value; dataY<-dataY[,c("ParkCode", "Description" , "Visit.Start.Date", "y")]
         
         data<-join(dataX, dataY, by= c("Description","Visit.Start.Date"), type= "left")
+        data$ParkCode<-NULL #ading two parkcodes so need to get rid ofd
         
         # Create Year variable
-        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%Y-%m-%d") #convert to StartDate
+        data$Visit.Start.Date<-as.Date(data$Visit.Start.Date, format= "%m/%d/%Y") #convert to StartDate
         data$Year<-as.factor(format(data$Visit.Start.Date,"%Y")) #extract Year
         
         #data_w<-cast(data, ParkCode+ Description + Visit.Start.Date +Year+ DEPTH ~  Local.Characteristic.Name, fun=mean,  value= "Value")

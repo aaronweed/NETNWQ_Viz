@@ -1,11 +1,11 @@
 parm,unit
-Discharge,Discharge (cu ft /sec)
-DO_mg.L,Dissolved Oxygen  (mg/L)
-DO (%),Dissolved Oxygen (%)
+Discharge_cfs,Discharge (cu ft /sec)
+DO..mg.L.,Dissolved Oxygen  (mg/L)
+DO..Sat,Dissolved Oxygen (%)
 pH,pH
 BP_mmHG,BP (mm HG)
-Specific conductance,Specific Conductance (猶/cm)
-Water Temperature,Temperature (C)
+SpCond..uS.cm.,Specific Conductance (猶/cm)
+Temp..C.,Water temperature (蚓)
 TotalArea,Total Area (m2)
 TotalVel,Total velocity 
 Turbidity,Turbidity (NTU)
@@ -18,7 +18,7 @@ ACOLOR,A Color
 TCOLOR,T Color
 TColor_Flag,
 COND,
-ANC,ANC (畫q/L)
+ANC_ueqL,ANC (畫q/L)
 Ca_ueqL,Ca (畫q/L)
 Mg_ueqL,Mg (畫q/L)
 K_ueqL,K (畫q/L)
@@ -42,7 +42,7 @@ NH3_mg/L,Nh3  (mg/L)
 NH3_Flag,
 TN_mg/L,TN  (mg/L)
 TN_Flag,
-TP_ug/L,TP  (痢/L)
+TP_ug/L,TP  (mg/L)
 TP_Flag,
 T_Dis_P_ugL,Total Diss. P (痢/L)
 T_Dis_P_Flag,
